@@ -1,11 +1,11 @@
 <pre class='metadata'>
-Title: The TODO API
-Shortname: todo
+Title: generate() method of URLPattern
+Shortname: urlpattern-generate
 Level: None
 Status: w3c/UD
-Repository: explainers-by-googlers/todo-your-repo-name
+Repository: explainers-by-googlers/urlpattern-generate
 URL: https://explainers-by-googlers.github.io/todo-your-repo-name
-Editor: TODO: Your Name, Google https://google.com, TODO@google.com
+Editor: Takashi Nakayama, Google https://google.com, tnak@chromium.org
 Abstract: TODO: A short description of your spec, one or two sentences.
 Markup Shorthands: markdown yes, css no
 Complain About: accidental-2119 yes, missing-example-ids yes

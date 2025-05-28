@@ -1,177 +1,137 @@
-# Explainer for the TODO API
+# **generate() method of URLPattern**
 
-**Instructions for the explainer author: Search for "todo" in this repository and update all the
-instances as appropriate. For the instances in `index.bs`, update the repository name, but you can
-leave the rest until you start the specification. Then delete the TODOs and this block of text.**
+his proposal is an early design sketch by the Chrome Loading team to describe the problem below and solicit feedback on the proposed solution. It has not been approved to ship in Chrome.
 
-This proposal is an early design sketch by [TODO: team] to describe the problem below and solicit
-feedback on the proposed solution. It has not been approved to ship in Chrome.
+## **Authors**
 
-TODO: Fill in the whole explainer template below using https://tag.w3.org/explainers/ as a
-reference. Look for [brackets].
+* Takashi Nakayama ([@azaika](https://github.com/azaika))  
+* Shunya Shishido ([@sisidovski](https://github.com/sisidovski))
 
-## Proponents
+## **Participate**
 
-- [Proponent team 1]
-- [Proponent team 2]
-- [etc.]
+* [WHATWG URLPattern Issue \#73](https://github.com/whatwg/urlpattern/issues/73)
 
-## Participate
-- https://github.com/explainers-by-googlers/[your-repository-name]/issues
-- [Discussion forum]
+## **What is this?**
 
-## Table of Contents [if the explainer is longer than one printed page]
+We propose a new method of [URLPattern API](https://www.google.com/url?q=https://github.com/whatwg/urlpattern&sa=D&source=docs&ust=1748236573725324&usg=AOvVaw0fORTwpvELTe2LqCn-xB7_) to generate component strings from a `URLPattern` object. Currently, `URLPattern` primarily focuses on matching URLs against patterns and extracting information from matched URLs using methods like `test()` and `exec()`. There is no standard way to take a `URLPattern` object (like `/user/:id`) and a set of values (like `id=123`) and generate the corresponding URL or component string that matches that pattern (like `/user/123`). The proposed `generate()` method aims to fill this gap. This functionality makes it possible to perform reverse routing or URL construction, and IFT (Incremental Font Transfer) is one such use case needing such features ([W3C IFT Issue \#259](https://github.com/w3c/IFT/issues/259)).
 
-<!-- Update this table of contents by running `npx doctoc README.md` -->
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## **Goals**
 
-- [Introduction](#introduction)
-- [Goals](#goals)
-- [Non-goals](#non-goals)
-- [User research](#user-research)
-- [Use cases](#use-cases)
-  - [Use case 1](#use-case-1)
-  - [Use case 2](#use-case-2)
-- [[Potential Solution]](#potential-solution)
-  - [How this solution would solve the use cases](#how-this-solution-would-solve-the-use-cases)
-    - [Use case 1](#use-case-1-1)
-    - [Use case 2](#use-case-2-1)
-- [Detailed design discussion](#detailed-design-discussion)
-  - [[Tricky design choice #1]](#tricky-design-choice-1)
-  - [[Tricky design choice 2]](#tricky-design-choice-2)
-- [Considered alternatives](#considered-alternatives)
-  - [[Alternative 1]](#alternative-1)
-  - [[Alternative 2]](#alternative-2)
-- [Stakeholder Feedback / Opposition](#stakeholder-feedback--opposition)
-- [References & acknowledgements](#references--acknowledgements)
+* Provide a standardized way to construct URLs from URLPattern objects.  
+* Enable developers and other standard APIs to easily perform reverse routing or URL generation.
 
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+## **Non-Goals**
 
-## Introduction
+* Supporting complex template languages beyond what `URLPattern` already has.  
+* Making `URLPattern` objects mutable.
 
-[The "executive summary" or "abstract".
-Explain in a few sentences what the goals of the project are,
-and a brief overview of how the solution works.
-This should be no more than 1-2 paragraphs.]
+## **Interface and example**
 
-## Goals
+### WebIDL
 
-[What is the **end-user need** which this project aims to address? Make this section short, and
-elaborate in the Use cases section.]
-
-## Non-goals
-
-[If there are "adjacent" goals which may appear to be in scope but aren't,
-enumerate them here. This section may be fleshed out as your design progresses and you encounter necessary technical and other trade-offs.]
-
-## User research
-
-[If any user research has been conducted to inform your design choices,
-discuss the process and findings. User research should be more common than it is.]
-
-## Use cases
-
-[Describe in detail what problems end-users are facing, which this project is trying to solve. A
-common mistake in this section is to take a web developer's or server operator's perspective, which
-makes reviewers worry that the proposal will violate [RFC 8890, The Internet is for End
-Users](https://www.rfc-editor.org/rfc/rfc8890).]
-
-### Use case 1
-
-### Use case 2
-
-<!-- In your initial explainer, you shouldn't be attached or appear attached to any of the potential
-solutions you describe below this. -->
-
-## [Potential Solution]
-
-[For each related element of the proposed solution - be it an additional JS method, a new object, a new element, a new concept etc., create a section which briefly describes it.]
-
-```js
-// Provide example code - not IDL - demonstrating the design of the feature.
-
-// If this API can be used on its own to address a user need,
-// link it back to one of the scenarios in the goals section.
-
-// If you need to show how to get the feature set up
-// (initialized, or using permissions, etc.), include that too.
+```webidl
+enum URLPatternComponent { "protocol", "username", "password", "hostname", "port", "pathname", "search", "hash" };
+partial interface URLPattern {
+  USVString generate(
+      URLPatternComponent component,
+      record<USVString, USVString> groups);
+};
 ```
 
-[Where necessary, provide links to longer explanations of the relevant pre-existing concepts and API.
-If there is no suitable external documentation, you might like to provide supplementary information as an appendix in this document, and provide an internal link where appropriate.]
+### Example
 
-[If this is already specced, link to the relevant section of the spec.]
+```javascript
+// Example 1: Pattern of a fixed string
+let pattern = new URLPattern({ protocol: 'https' });
+pattern.generate('protocol', {}); // Returns: 'https'
 
-[If spec work is in progress, link to the PR or draft of the spec.]
+// Example 2: Simple pattern with one named capture group
+let pattern = new URLPattern({ pathname: '/user/:id' });
+pattern.generate('pathname', { id: '123' }); // Returns: '/user/123'
 
-[If you have more potential solutions in mind, add ## Potential Solution 2, 3, etc. sections.]
+// Example 3: Pattern with multiple named capture groups
+pattern = new URLPattern({ pathname: '/product/:category/:id' });
+pattern.generate('pathname', { category: 'electronics', id: '456' }); // Returns: '/product/electronics/456'
 
-### How this solution would solve the use cases
+// Example 4: Pattern in hostname
+pattern = new URLPattern('https://:subdomain.example.com/');
+pattern.generate('hostname', { subdomain: 'store' }); // Returns: 'store.example.com'
 
-[If there are a suite of interacting APIs, show how they work together to solve the use cases described.]
+// Example 5: TypeError when `groups` is not sufficient
+let pattern = new URLPattern({ pathname: '/user/:id' });
+pattern.generate('pathname', { }); // Raises TypeError
 
-#### Use case 1
+// Example 6: Ignore redundant input(s)
+let pattern = new URLPattern({ pathname: '/user/:id' });
+pattern.generate('pathname', { id: '123', more: 'input' }); // Returns: '/user/123'
 
-[Description of the end-user scenario]
-
-```js
-// Sample code demonstrating how to use these APIs to address that scenario.
+// Example 7: Non-ascii inputs (see URL Encoding section below)
+pattern = new URLPattern('https://:subdomain.example.com/:id');
+pattern.generate('hostname', { subdomain: '🍅' }); // Returns: 'xn--fi8h.example.com'
+pattern.generate('pathname', { id: '🍅' }); // Returns: '/%F0%9F%8D%85'
 ```
 
-#### Use case 2
+## **Design**
 
-[etc.]
+### URL encoding
 
-## Detailed design discussion
+`URLPattern` already has encoding rules for components \[[spec](https://urlpattern.spec.whatwg.org/#canon-encoding-callbacks)\], which invokes [basic url parser](https://url.spec.whatwg.org/#concept-basic-url-parser) in the process of compiling patterns. The `generate()` method follows this by encoding given strings in the same way.
 
-### [Tricky design choice #1]
+### Full-Wildcard and RegExp parts are out of scope for now
 
-[Talk through the tradeoffs in coming to the specific design point you want to make.]
+Full-Wildcard are the parts represented as `*`. For example, the pathname pattern `/*` accepts `/arbitrary/numbers/of/sections`. RegExps are parts with constraints by user-provided RegExp like `/:id([0-9]+)`. To allow for thorough consideration, support for these features will be suspended initially \[[doc](https://docs.google.com/document/d/1hOG2SzMVab0fBJrV8J8w3wSWsbGZxDLyvjdhDu8WsT0)\]. The following example raises a TypeError.
 
-```js
-// Illustrated with example code.
+```javascript
+// Example: Pattern with Full-Wildcards
+let pattern = new URLPattern({ protocol: '/*' });
+pattern.generate('protocol', {}); // Raises TypeError
 ```
 
-[This may be an open question,
-in which case you should link to any active discussion threads.]
+This decision does not hinder IFT because they do not plan to use these functionalities. The same goes for patterns with modifiers like `?`, `+`, or `*` because they are essentially RegExp(s).
 
-### [Tricky design choice 2]
+## **Alternative considered**
 
-[etc.]
+### Record vs. Sequence
 
-## Considered alternatives
+There is an option of making the second argument of `generate()` a sequence as follows:
 
-[This should include as many alternatives as you can,
-from high level architectural decisions down to alternative naming choices.]
+```webidl
+enum URLPatternComponent { ... };
 
-### [Alternative 1]
+partial interface URLPattern {
+  USVString generate(
+      URLPatternComponent component,
+      sequence<USVString> groups);
+};
+```
 
-[Describe an alternative which was considered,
-and why you decided against it.]
+In this case, developers pass a sequence like `[‘electronics’,‘456’]` for a pattern `/:category/:id`. However, we prefer record because records supersedes arrays in JavaScript and also align with how groups are represented in  `URLPatternComponentResult` \[[spec](https://urlpattern.spec.whatwg.org/#dictdef-urlpatterncomponentresult)\]. Discussions about this are made in [this doc](https://docs.google.com/document/d/1ca6geyHD40MfHkalgEv4AcBo9-rHK6CrAOxwcWor9WA/).
 
-### [Alternative 2]
+### Generating URL rather than component string
 
-[etc.]
+There may be needs for generating the complete URL, not component strings. Two API interfaces have been discussed to meet such needs:
 
-## Stakeholder Feedback / Opposition
+```javascript
+// Option 1: Separation by components, allowing duplicate names
+let pattern = new URLPattern('https://:subdomain.example.com/:id');
+pattern.generate({
+	hostname: { subdomain: 'store' },
+	pathname: { id: '123' }
+}); // Returns: 'https://store.example.com/123'
+new URLPattern('https://:id.example.com/:id').generate({ ... }); // OK
 
-[Implementors and other stakeholders may already have publicly stated positions on this work. If you can, list them here with links to evidence as appropriate.]
+// Option 2: Unified group, throwing for duplicate names
+let pattern = new URLPattern('https://:subdomain.example.com/:id');
+pattern.generate({
+	subdomain: 'store',
+	id: '123'
+}); // Returns: 'https://store.example.com/123'
+new URLPattern('https://:id.example.com/:id').generate({ ... }); // Raises TypeError
+```
 
-- [Implementor A] : Positive
-- [Stakeholder B] : No signals
-- [Implementor C] : Negative
+However, we omit this functionality for the initial step since we don’t have a clear idea on which is good, and these two interfaces interfere with each other.
 
-[If appropriate, explain the reasons given by other implementors for their concerns.]
+### Method name
 
-## References & acknowledgements
+The [path-to-regexp](https://github.com/pillarjs/path-to-regexp) library, the basis for standardizing URLPattern API, provides a similar functionality as [the compile() function](https://github.com/pillarjs/path-to-regexp). However, we adapt the name of `generate()` by following the [URLPattern issue](https://github.com/whatwg/urlpattern/issues/73). This name change is acceptable because we no longer need to maintain the same interface as the original library in URLPattern.  
 
-[Your design will change and be informed by many people; acknowledge them in an ongoing way! It helps build community and, as we only get by through the contributions of many, is only fair.]
-
-[Unless you have a specific reason not to, these should be in alphabetical order.]
-
-Many thanks for valuable feedback and advice from:
-
-- [Person 1]
-- [Person 2]
-- [etc.]
